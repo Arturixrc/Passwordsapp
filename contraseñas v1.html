@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Contraseñas Seguras</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f2f5;
+            transition: background 0.3s ease;
+        }
+
+        /* Modo oscuro */
+        body.dark {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            transition: background 0.3s ease;
+        }
+
+        .dark .container {
+            background: #2c2c2c;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .dark h1 {
+            color: #fff;
+        }
+
+        /* Campo de contraseña */
+        #password-display {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            word-wrap: break-word;
+        }
+
+        .dark #password-display {
+            background: #3a3a3a;
+            border-color: #555;
+        }
+
+        /* Controles */
+        .controls {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #555;
+        }
+
+        .dark label {
+            color: #ccc;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* Botones */
+        button {
+            padding: 0.8rem;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #copy-btn {
+            background: #28a745;
+        }
+
+        #copy-btn:hover {
+            background: #218838;
+        }
+
+        /* Indicador de fortaleza */
+        #strength {
+            height: 10px;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        /* Consejos */
+        .tips {
+            font-size: 0.9rem;
+            color: #777;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .dark .tips {
+            color: #aaa;
+        }
+
+        /* Switch de modo oscuro */
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            cursor: pointer;
+        }
+
+        /* Responsividad */
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                padding: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal -->
+    <div class="container">
+        <h1>Generador de Contraseñas</h1>
+        <div id="password-display">Haz clic en "Generar" para empezar</div>
+        
+        <!-- Controles de configuración -->
+        <div class="controls">
+            <label>Longitud: <input type="number" id="length" min="8" max="50" value="16"></label>
+            <label><input type="checkbox" id="uppercase" checked> Mayúsculas</label>
+            <label><input type="checkbox" id="lowercase" checked> Minúsculas</label>
+            <label><input type="checkbox" id="numbers" checked> Números</label>
+            <label><input type="checkbox" id="symbols" checked> Símbolos</label>
+        </div>
+
+        <!-- Indicador de fortaleza -->
+        <div id="strength"></div>
+
+        <!-- Botones -->
+        <button id="generate-btn">Generar Contraseña</button>
+        <button id="copy-btn">Copiar al Portapapeles</button>
+
+        <!-- Consejos de seguridad -->
+        <p class="tips">Consejo: No reutilices contraseñas y usa al menos 12 caracteres.</p>
+    </div>
+
+    <!-- Botón de modo oscuro -->
+    <div class="theme-toggle">🌙</div>
+
+    <script>
+        // Cargar fuente de Google Fonts dinámicamente
+        const link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+
+        // Elementos del DOM
+        const passwordDisplay = document.getElementById('password-display');
+        const lengthInput = document.getElementById('length');
+        const uppercaseCheck = document.getElementById('uppercase');
+        const lowercaseCheck = document.getElementById('lowercase');
+        const numbersCheck = document.getElementById('numbers');
+        const symbolsCheck = document.getElementById('symbols');
+        const generateBtn = document.getElementById('generate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const strengthBar = document.getElementById('strength');
+        const themeToggle = document.querySelector('.theme-toggle');
+
+        // Caracteres disponibles
+        const chars = {
+            uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lowercase: 'abcdefghijklmnopqrstuvwxyz',
+            numbers: '0123456789',
+            symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?'
+        };
+
+        // Generar contraseña
+        function generatePassword() {
+            const length = Math.min(Math.max(parseInt(lengthInput.value), 8), 50);
+            let availableChars = '';
+            let password = '';
+
+            if (uppercaseCheck.checked) availableChars += chars.uppercase;
+            if (lowercaseCheck.checked) availableChars += chars.lowercase;
+            if (numbersCheck.checked) availableChars += chars.numbers;
+            if (symbolsCheck.checked) availableChars += chars.symbols;
+
+            if (availableChars === '') {
+                passwordDisplay.textContent = 'Selecciona al menos una opción';
+                strengthBar.style.width = '0';
+                return;
+            }
+
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * availableChars.length);
+                password += availableChars[randomIndex];
+            }
+
+            passwordDisplay.textContent = password;
+            evaluateStrength(password);
+        }
+
+        // Evaluar fortaleza de la contraseña
+        function evaluateStrength(password) {
+            let strength = 0;
+            if (password.length >= 12) strength += 30;
+            if (/[A-Z]/.test(password)) strength += 20;
+            if (/[a-z]/.test(password)) strength += 20;
+            if (/[0-9]/.test(password)) strength += 20;
+            if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) strength += 10;
+
+            strengthBar.style.width = `${strength}%`;
+            if (strength <= 40) strengthBar.style.background = '#dc3545'; // Débil
+            else if (strength <= 80) strengthBar.style.background = '#ffc107'; // Media
+            else strengthBar.style.background = '#28a745'; // Fuerte
+        }
+
+        // Copiar al portapapeles
+        function copyToClipboard() {
+            const text = passwordDisplay.textContent;
+            if (text && text !== 'Selecciona al menos una opción' && text !== 'Haz clic en "Generar" para empezar') {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('¡Contraseña copiada al portapapeles!');
+                });
+            }
+        }
+
+        // Alternar modo oscuro
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // Cargar preferencia de tema
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+            themeToggle.textContent = '☀️';
+        }
+
+        // Eventos
+        generateBtn.addEventListener('click', generatePassword);
+        copyBtn.addEventListener('click', copyToClipboard);
+        themeToggle.addEventListener('click', toggleTheme);
+    </script>
+</body>
+</html>
